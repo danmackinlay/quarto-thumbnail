@@ -149,8 +149,8 @@ function Image(el)
         local version = quarto.version
         if version[1] == 1 and version[2] < 4 then
             quarto.log.warning([[
-                You are on a Quarto <1.4. As a result, all the generated webp files won't be added to your output. 
-                You can work around this by adding a 'resources: -"*.webp"' to your project metadata. 
+                You are on a Quarto <1.4. As a result, all the generated webp files won't be added to your output.
+                You can work around this by adding a 'resources: -"*.webp"' to your project metadata.
                 This also means the generated files will remain unmoved.
             ]])
         else
