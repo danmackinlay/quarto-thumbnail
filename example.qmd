@@ -8,11 +8,12 @@ filters:
     path: _extensions/thumbnail/thumbnail.lua
 ---
 
+big image that will be ignored
 
-![](images/norman-tsui-AB8Vn19fgaE-unsplash.jpg){fig-alt="An image" .foreign}
+![](/images/norman-tsui-AB8Vn19fgaE-unsplash.jpg){fig-alt="An image" .foreign}
 
+one that will be thumbnailed:
 
-
-![](images/photo-1708356948226-259cf75514a2.jpeg){fig-alt="An image" }
+![](/images/photo-1708356948226-259cf75514a2.jpeg){fig-alt="An image" }
 
 The optimized image generates sizes of 1200, 800, 400. It generates the "highest" optimized width possible and everything that's smaller.

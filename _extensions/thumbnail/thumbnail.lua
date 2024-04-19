@@ -38,6 +38,8 @@ function Image(el)
     -- Return early if image is excluded or a thumbnail has already been set
     if seenImagePaths[el.src] or firstThumbnailPath then return nil end
     if el.attr.classes:includes('foreign') then return nil end
+    -- this doesn't need any js; but there isn't a point with using this with epubs
+    if not quarto.doc.is_format("html:js") then return nil end
 
     local pathComponents = pandoc.path.split(el.src)
     local filenameWithExt = table.remove(pathComponents)
@@ -48,7 +50,7 @@ function Image(el)
         quarto.log.error("Failed to extract filename from path: " .. filenameWithExt)
         return nil
     end
-
+    quarto.log.output(dir)
     local thumbnailDir = pandoc.path.join({ dir, "thumbnail" })
     if not ensureDirectoryExists(thumbnailDir) then return nil end
 
