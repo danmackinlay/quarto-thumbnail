@@ -35,16 +35,13 @@ local function getFileModTime(path)
 end
 
 function Image(el)
-    -- Quit early if the first thumbnail has already been processed or if image is marked as seen
-    if firstThumbnailPath or seenImagePaths[el.src] then return nil end
+    -- Return early if image is excluded or a thumbnail has already been set
+    if seenImagePaths[el.src] or firstThumbnailPath then return nil end
+    if el.attr.classes:includes('foreign') then return nil end
 
     local pathComponents = pandoc.path.split(el.src)
     local filenameWithExt = table.remove(pathComponents)
     local dir = table.concat(pathComponents, pandoc.path.separator)
-    if not dir or dir == "" then
-        quarto.log.error("Directory path is empty or invalid.")
-        return nil
-    end
 
     local filename, extension = pandoc.path.split_extension(filenameWithExt)
     if not filename then
@@ -56,6 +53,7 @@ function Image(el)
     if not ensureDirectoryExists(thumbnailDir) then return nil end
 
     local thumbnailPath = pandoc.path.join({ thumbnailDir, filename .. ".thumbnail.avif" })
+
     local srcModTime = getFileModTime(el.src)
     local thumbModTime = getFileModTime(thumbnailPath)
 
@@ -78,30 +76,20 @@ function Image(el)
         quarto.log.error("Failed to create thumbnail for image " .. el.src .. " with error: " .. output)
         return nil
     end
-
     seenImagePaths[el.src] = true
     firstThumbnailPath = thumbnailPath -- Store the first valid thumbnail path
     return el
 end
 
 function Figure(fig)
-    -- Check if the figure has 'foreign' class; if so, do not process any images within it
+    -- if the figure is foreign, we don't want to process it or its children
     if fig.attr.classes:includes('foreign') then
-        for _, content in pairs(fig.content) do
-            if content.t == 'Image' then
-                seenImagePaths[content.src] = true -- Mark as seen to skip processing
+        pandoc.walk_block(fig, {
+            Image = function(el)
+                seenImagePaths[el.src] = true -- Mark this image as processed
             end
-        end
-        return fig
+        })
     end
-
-    -- Process images within the figure if not 'foreign'
-    for _, content in pairs(fig.content) do
-        if content.t == 'Image' then
-            Image(content)
-        end
-    end
-    return fig
 end
 
 function Meta(meta)
@@ -113,5 +101,5 @@ end
 
 return {
     { Image = Image, Figure = Figure }, -- Process Images and Figures
-    { Meta = Meta }                     -- Update metadata last
+    { Meta = Meta }                            -- Update metadata last
 }
