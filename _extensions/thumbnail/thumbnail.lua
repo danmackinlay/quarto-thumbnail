@@ -21,11 +21,16 @@ end
 local function getFileModTime(path)
     local command = "stat -c %Y " .. escapeShellArg(path) .. " 2> /dev/null"
     local handle = io.popen(command)
+    if not handle then
+        return nil
+    end
     local result = handle:read("*a")
     handle:close()
-    return tonumber(result)
+    local modTime = tonumber(result)
+    if modTime then
+        return modTime
+    end
 end
-
 local firstThumbnailPath -- Store the first thumbnail path
 
 function Image(el)
@@ -66,7 +71,9 @@ function Image(el)
         240)
     local handle = io.popen(command .. " 2>&1", "r")
     local output = handle and handle:read("*all")
-    handle:close()
+    if handle then
+        handle:close()
+    end
     if output and output ~= "" then
         quarto.log.error("Failed to create thumbnail for image " .. el.src .. " with error: " .. output)
         return nil
