@@ -4,7 +4,8 @@ format:
   html:
     toc: true
 filters:
-  - thumbnail
+  - at: pre-ast
+    path: _extensions/thumbnail/thumbnail.lua
 ---
 
 ## A large, uncompressed image

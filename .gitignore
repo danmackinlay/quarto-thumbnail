@@ -4,6 +4,7 @@
 /.luarc.json
 /.quarto/
 _site
+images/thumbnail/
 
 # Created by https://www.toptal.com/developers/gitignore/api/macos,visualstudiocode
 # Edit at https://www.toptal.com/developers/gitignore?templates=macos,visualstudiocode
@@ -59,5 +60,4 @@ Temporary Items
 # Ignore all local history of files
 .history
 .ionide
-
 # End of https://www.toptal.com/developers/gitignore/api/macos,visualstudiocode
