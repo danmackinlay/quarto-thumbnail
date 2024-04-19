@@ -41,9 +41,11 @@ function Image(el)
     -- this doesn't need any js; but there isn't a point with using this with epubs
     if not quarto.doc.is_format("html:js") then return nil end
 
+
+    -- see https://github.com/quarto-dev/quarto-cli/blob/1fe3ca8e32c72cf92cb1d962b193597c86edb2ce/src/resources/pandoc/datadir/init.lua#L1771C1-L1777C49
     local pathComponents = pandoc.path.split(el.src)
     local filenameWithExt = table.remove(pathComponents)
-    local dir = table.concat(pathComponents, pandoc.path.separator)
+    local dir = pandoc.path.join({pathComponents, pandoc.path.separator})
 
     local filename, extension = pandoc.path.split_extension(filenameWithExt)
     if not filename then
