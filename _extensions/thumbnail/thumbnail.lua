@@ -54,24 +54,22 @@ function Image(el)
     local thumbModTime = getFileModTime(thumbnailPath)
 
     if thumbModTime and srcModTime and thumbModTime >= srcModTime then
-        el.src = thumbnailPath -- Use existing thumbnail
-    else
-        if not checkIfCommandExists("vips") then
-            quarto.log.error("vips is not installed. Please install it to use this filter.")
-            return nil
-        end
+        firstThumbnailPath = thumbnailPath
+        return nil
+    end
+    if not checkIfCommandExists("vips") then
+        quarto.log.error("vips is not installed. Please install it to use this filter.")
+        return nil
+    end
 
-        local command = string.format("vips thumbnail %s %s %d", escapeShellArg(el.src), escapeShellArg(thumbnailPath),
-            240)
-        local handle = io.popen(command .. " 2>&1", "r")
-        local output = handle and handle:read("*all")
-        handle:close()
-        if output and output ~= "" then
-            quarto.log.error("Failed to create thumbnail for image " .. el.src .. " with error: " .. output)
-            return nil
-        end
-
-        el.src = thumbnailPath -- Update image source with new thumbnail
+    local command = string.format("vips thumbnail %s %s %d", escapeShellArg(el.src), escapeShellArg(thumbnailPath),
+        240)
+    local handle = io.popen(command .. " 2>&1", "r")
+    local output = handle and handle:read("*all")
+    handle:close()
+    if output and output ~= "" then
+        quarto.log.error("Failed to create thumbnail for image " .. el.src .. " with error: " .. output)
+        return nil
     end
 
     firstThumbnailPath = thumbnailPath -- Store the first thumbnail path
