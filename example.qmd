@@ -1,5 +1,5 @@
 ---
-title: "optimize-images examples"
+title: "thumbnail examples"
 format:
   html:
     toc: true
