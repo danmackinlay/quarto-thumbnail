@@ -46,20 +46,16 @@ function Image(el)
     -- if absolute we want to resolve relative to project root,
     -- which is maybe where it is executed?
     local projectRoot = quarto.project.directory
-    -- quarto.log.output({ 'projectRoot', projectRoot })
     local workingDir = pandoc.system.get_working_directory()
-    -- quarto.log.output({ 'workingDir', workingDir })
     if pandoc.path.is_absolute(relsrc) then
-        -- relsrc = pandoc.path.normalize(relsrc)
+        --handle absolute paths inside projects as relative to project root
         sourcePath_seg = pandoc.path.split(relsrc)
         -- delete the leading absolut path element
         table.remove(sourcePath_seg, 1)
         relsrc = pandoc.path.join(sourcePath_seg)
-        -- quarto.log.output({ 'sourcepath1', relsrc })
         if projectRoot then
             relsrc = pandoc.path.join({ projectRoot, relsrc })
         end
-        -- quarto.log.output({ 'sourcepath2', relsrc })
     else
         relsrc = pandoc.path.make_relative(workingDir, relsrc, false)
     end
@@ -78,7 +74,6 @@ function Image(el)
     if not ensureDirectoryExists(thumbnailDir) then return nil end
 
     local thumbnailPath = pandoc.path.join({ thumbnailDir, filename .. ".thumbnail.avif" })
-    -- quarto.log.output({ 'thumbnailPath', thumbnailPath })
 
     local srcModTime = getFileModTime(relsrc)
     local thumbModTime = getFileModTime(thumbnailPath)
