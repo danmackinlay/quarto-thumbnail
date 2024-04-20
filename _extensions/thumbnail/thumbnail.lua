@@ -37,32 +37,54 @@ end
 function Image(el)
     -- Return early if image is excluded or a thumbnail has already been set
     if seenImagePaths[el.src] or firstThumbnailPath then return nil end
+    -- if the image is foreign, we don't want to process it
     if el.attr.classes:includes('foreign') then return nil end
     -- this doesn't need any js; but there isn't a point with using this with epubs
     if not quarto.doc.is_format("html:js") then return nil end
 
+    local relsrc = el.src
+    -- if absolute we want to resolve relative to project root,
+    -- which is maybe where it is executed?
+    local projectRoot = quarto.project.directory
+    -- quarto.log.output({ 'projectRoot', projectRoot })
+    local workingDir = pandoc.system.get_working_directory()
+    -- quarto.log.output({ 'workingDir', workingDir })
+    if pandoc.path.is_absolute(relsrc) then
+        -- relsrc = pandoc.path.normalize(relsrc)
+        sourcePath_seg = pandoc.path.split(relsrc)
+        -- delete the leading absolut path element
+        table.remove(sourcePath_seg, 1)
+        relsrc = pandoc.path.join(sourcePath_seg)
+        -- quarto.log.output({ 'sourcepath1', relsrc })
+        if projectRoot then
+            relsrc = pandoc.path.join({ projectRoot, relsrc })
+        end
+        -- quarto.log.output({ 'sourcepath2', relsrc })
+    else
+        relsrc = pandoc.path.make_relative(workingDir, relsrc, false)
+    end
 
-    -- see https://github.com/quarto-dev/quarto-cli/blob/1fe3ca8e32c72cf92cb1d962b193597c86edb2ce/src/resources/pandoc/datadir/init.lua#L1771C1-L1777C49
-    local pathComponents = pandoc.path.split(el.src)
+    local pathComponents = pandoc.path.split(relsrc)
     local filenameWithExt = table.remove(pathComponents)
-    local dir = pandoc.path.join({pathComponents, pandoc.path.separator})
+    local dir = pandoc.path.join(pathComponents)
 
     local filename, extension = pandoc.path.split_extension(filenameWithExt)
     if not filename then
         quarto.log.error("Failed to extract filename from path: " .. filenameWithExt)
         return nil
     end
-    quarto.log.output(dir)
     local thumbnailDir = pandoc.path.join({ dir, "thumbnail" })
+
     if not ensureDirectoryExists(thumbnailDir) then return nil end
 
     local thumbnailPath = pandoc.path.join({ thumbnailDir, filename .. ".thumbnail.avif" })
+    -- quarto.log.output({ 'thumbnailPath', thumbnailPath })
 
-    local srcModTime = getFileModTime(el.src)
+    local srcModTime = getFileModTime(relsrc)
     local thumbModTime = getFileModTime(thumbnailPath)
 
     if thumbModTime and srcModTime and thumbModTime >= srcModTime then
-        seenImagePaths[el.src] = true
+        seenImagePaths[relsrc] = true
         return nil -- Use existing thumbnail
     end
     if not checkIfCommandExists("vips") then
@@ -70,14 +92,14 @@ function Image(el)
         return nil
     end
 
-    local command = string.format("vips thumbnail %s %s %d", escapeShellArg(el.src), escapeShellArg(thumbnailPath), 240)
+    local command = string.format("vips thumbnail %s %s %d", escapeShellArg(relsrc), escapeShellArg(thumbnailPath), 240)
     local handle = io.popen(command .. " 2>&1", "r")
     local output = handle and handle:read("*all")
     if handle then
         handle:close()
     end
     if output and output ~= "" then
-        quarto.log.error("Failed to create thumbnail for image " .. el.src .. " with error: " .. output)
+        quarto.log.error("Failed to create thumbnail for image " .. relsrc .. " with error: " .. output)
         return nil
     end
     seenImagePaths[el.src] = true
@@ -105,5 +127,5 @@ end
 
 return {
     { Image = Image, Figure = Figure }, -- Process Images and Figures
-    { Meta = Meta }                            -- Update metadata last
+    { Meta = Meta }                     -- Update metadata last
 }
